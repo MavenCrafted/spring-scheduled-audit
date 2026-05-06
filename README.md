@@ -1,5 +1,6 @@
 # Scheduled Audit Auto-Configuration
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mavencrafted/scheduled-audit-autoconfigure?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.mavencrafted/scheduled-audit-autoconfigure/overview)
 [![javadoc](https://javadoc.io/badge2/io.github.mavencrafted/scheduled-audit-autoconfigure/javadoc.svg)](https://javadoc.io/doc/io.github.mavencrafted/scheduled-audit-autoconfigure)
 [![CodeQL](https://github.com/MavenCrafted/scheduled-audit-autoconfigure/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/MavenCrafted/scheduled-audit-autoconfigure/actions/workflows/github-code-scanning/codeql)
 
