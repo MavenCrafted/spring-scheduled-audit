@@ -1,8 +1,8 @@
 # Scheduled Audit Auto-Configuration
 
-`scheduled-audit-autoconfigure` is a Spring Boot library for auditing the execution of `@Scheduled` jobs.
+`scheduled-audit-autoconfigure` is a Spring Boot auto-configuration module for publishing audit events around `@Scheduled` job executions.
 
-It is designed to capture scheduled job lifecycle events such as start, completion, failure, and duration, with support for audit backends implemented through logging or persistence.
+It provides a listener-based extension point for scheduled job lifecycle events such as start, completion, and failure, and includes a default logging listener out of the box.
 
 ## Installation
 
@@ -21,15 +21,15 @@ To use the library, add `scheduled-audit-autoconfigure` together with `spring-bo
 </dependency>
 ```
 
-`scheduled-audit-autoconfigure` is enabled automatically when it is present in a Spring Boot application. Existing `@Scheduled` methods are picked up without additional setup, and debug logging can be used to observe scheduled job audit activity.
+`scheduled-audit-autoconfigure` is enabled automatically when it is present in a Spring Boot application. Existing `@Scheduled` methods are intercepted without additional setup, and the default logging listener can be observed through debug logging.
 
-Custom audit backends can be added by declaring one or more `ScheduledAuditListener` beans:
+Custom listeners can be added by declaring one or more `ScheduledAuditListener` beans:
 
 ```java
 @Bean
 ScheduledAuditListener databaseScheduledAuditListener() {
     return event -> {
-        // persist the audit event
+        // handle the audit event
     };
 }
 ```
