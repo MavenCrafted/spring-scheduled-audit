@@ -5,6 +5,9 @@ import org.apache.commons.logging.LogFactory;
 
 import java.time.Duration;
 
+/**
+ * Default {@link ScheduledAuditListener} that writes scheduled audit events to the application log.
+ */
 public final class LoggingScheduledAuditListener implements ScheduledAuditListener {
 
     private static final Log logger = LogFactory.getLog(LoggingScheduledAuditListener.class);
