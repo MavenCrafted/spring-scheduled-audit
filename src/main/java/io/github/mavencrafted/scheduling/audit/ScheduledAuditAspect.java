@@ -15,6 +15,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Aspect that emits {@link ScheduledAuditEvent} instances around {@code @Scheduled} method execution.
+ */
 @Aspect
 public class ScheduledAuditAspect {
 
@@ -22,10 +25,23 @@ public class ScheduledAuditAspect {
 
     private final List<ScheduledAuditListener> scheduledAuditListeners;
 
+    /**
+     * Creates a new aspect backed by the provided listeners.
+     *
+     * @param scheduledAuditListeners the listeners that receive audit events
+     */
     public ScheduledAuditAspect(List<ScheduledAuditListener> scheduledAuditListeners) {
         this.scheduledAuditListeners = List.copyOf(scheduledAuditListeners);
     }
 
+    /**
+     * Wraps a scheduled method invocation and publishes audit events for its lifecycle.
+     *
+     * @param joinPoint the intercepted scheduled method invocation
+     * @param scheduled the scheduled annotation that matched the invocation
+     * @return the scheduled method result
+     * @throws Throwable when the scheduled method fails
+     */
     @Around("@annotation(scheduled)")
     public Object audit(ProceedingJoinPoint joinPoint, Scheduled scheduled) throws Throwable {
         UUID executionId = UUID.randomUUID();
@@ -36,7 +52,8 @@ public class ScheduledAuditAspect {
             Object result = joinPoint.proceed();
             invokeListenersSafely(ScheduledAuditEvent.succeeded(executionId, taskName, startedAt, Instant.now()));
             return result;
-        } catch (Throwable throwable) {
+        }
+        catch (Throwable throwable) {
             invokeListenersSafely(ScheduledAuditEvent.failed(executionId, taskName, startedAt, Instant.now(), throwable));
             throw throwable;
         }
@@ -46,7 +63,8 @@ public class ScheduledAuditAspect {
         for (ScheduledAuditListener listener : scheduledAuditListeners) {
             try {
                 listener.onEvent(event);
-            } catch (RuntimeException ex) {
+            }
+            catch (RuntimeException ex) {
                 logger.warn("Scheduled audit listener failed: " + listener.getClass().getName(), ex);
             }
         }

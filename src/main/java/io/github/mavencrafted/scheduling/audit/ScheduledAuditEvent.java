@@ -3,6 +3,13 @@ package io.github.mavencrafted.scheduling.audit;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Represents a lifecycle event emitted for a single scheduled job execution.
+ *
+ * <p>The {@code executionId} is unique per scheduled job run and is shared by the
+ * {@link Status#STARTED} and matching terminal {@link Status#SUCCEEDED} or
+ * {@link Status#FAILED} event for that same execution.
+ */
 public final class ScheduledAuditEvent {
 
     private final UUID executionId;
@@ -21,45 +28,117 @@ public final class ScheduledAuditEvent {
         this.failure = failure;
     }
 
+    /**
+     * Creates a started event.
+     *
+     * @param executionId the execution identifier
+     * @param taskName the scheduled task name
+     * @param startedAt the execution start time
+     * @return the created event
+     */
     public static ScheduledAuditEvent started(UUID executionId, String taskName, Instant startedAt) {
         return new ScheduledAuditEvent(executionId, taskName, Status.STARTED, startedAt, null, null);
     }
 
+    /**
+     * Creates a succeeded event.
+     *
+     * @param executionId the execution identifier
+     * @param taskName the scheduled task name
+     * @param startedAt the execution start time
+     * @param finishedAt the execution completion time
+     * @return the created event
+     */
     public static ScheduledAuditEvent succeeded(UUID executionId, String taskName, Instant startedAt, Instant finishedAt) {
         return new ScheduledAuditEvent(executionId, taskName, Status.SUCCEEDED, startedAt, finishedAt, null);
     }
 
+    /**
+     * Creates a failed event.
+     *
+     * @param executionId the execution identifier
+     * @param taskName the scheduled task name
+     * @param startedAt the execution start time
+     * @param finishedAt the execution completion time
+     * @param failure the failure raised by the scheduled job
+     * @return the created event
+     */
     public static ScheduledAuditEvent failed(UUID executionId, String taskName, Instant startedAt, Instant finishedAt, Throwable failure) {
         return new ScheduledAuditEvent(executionId, taskName, Status.FAILED, startedAt, finishedAt, failure);
     }
 
+    /**
+     * Returns the execution identifier for the scheduled job run.
+     *
+     * <p>This identifier is unique per scheduled execution and remains the same across
+     * the started and terminal event emitted for that execution.
+     *
+     * @return the execution identifier
+     */
     public UUID getExecutionId() {
         return executionId;
     }
 
+    /**
+     * Returns the scheduled task name.
+     *
+     * @return the task name
+     */
     public String getTaskName() {
         return taskName;
     }
 
+    /**
+     * Returns the execution status.
+     *
+     * @return the execution status
+     */
     public Status getStatus() {
         return status;
     }
 
+    /**
+     * Returns the execution start time.
+     *
+     * @return the execution start time
+     */
     public Instant getStartedAt() {
         return startedAt;
     }
 
+    /**
+     * Returns the execution completion time.
+     *
+     * @return the execution completion time, or {@code null} when the execution has not completed
+     */
     public Instant getFinishedAt() {
         return finishedAt;
     }
 
+    /**
+     * Returns the failure raised by the scheduled job.
+     *
+     * @return the failure, or {@code null} when the execution completed successfully or has not completed
+     */
     public Throwable getFailure() {
         return failure;
     }
 
+    /**
+     * Defines the lifecycle state of a scheduled job execution.
+     */
     public enum Status {
+        /**
+         * The scheduled job has started.
+         */
         STARTED,
+        /**
+         * The scheduled job completed successfully.
+         */
         SUCCEEDED,
+        /**
+         * The scheduled job completed with a failure.
+         */
         FAILED
     }
 }
