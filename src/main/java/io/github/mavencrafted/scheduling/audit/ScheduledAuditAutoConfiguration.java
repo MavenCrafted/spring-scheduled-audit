@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.util.List;
+
 @AutoConfiguration
 @ConditionalOnClass({ Scheduled.class, Aspect.class })
 @ConditionalOnProperty(prefix = "scheduled-audit", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -15,8 +17,8 @@ public final class ScheduledAuditAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(ScheduledAuditAspect.class)
-    public ScheduledAuditAspect scheduledAuditAspect(ScheduledAuditListener listener) {
-        return new ScheduledAuditAspect(listener);
+    public ScheduledAuditAspect scheduledAuditAspect(List<ScheduledAuditListener> listeners) {
+        return new ScheduledAuditAspect(listeners);
     }
 
     @Bean
