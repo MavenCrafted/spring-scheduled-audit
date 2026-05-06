@@ -1,6 +1,7 @@
 package io.github.mavencrafted.scheduling.audit;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -20,12 +21,14 @@ public final class ScheduledAuditEvent {
     private final Throwable failure;
 
     private ScheduledAuditEvent(UUID executionId, String taskName, Status status, Instant startedAt, Instant finishedAt, Throwable failure) {
-        this.executionId = executionId;
-        this.taskName = taskName;
-        this.status = status;
-        this.startedAt = startedAt;
+        this.executionId = Objects.requireNonNull(executionId, "executionId must not be null");
+        this.taskName = Objects.requireNonNull(taskName, "taskName must not be null");
+        this.status = Objects.requireNonNull(status, "status must not be null");
+        this.startedAt = Objects.requireNonNull(startedAt, "startedAt must not be null");
         this.finishedAt = finishedAt;
         this.failure = failure;
+
+        validateState();
     }
 
     /**
@@ -122,6 +125,39 @@ public final class ScheduledAuditEvent {
      */
     public Throwable getFailure() {
         return failure;
+    }
+
+    private void validateState() {
+        if (this.finishedAt != null && this.finishedAt.isBefore(this.startedAt)) {
+            throw new IllegalArgumentException("finishedAt must not be before startedAt");
+        }
+
+        switch (this.status) {
+            case STARTED -> {
+                if (this.finishedAt != null) {
+                    throw new IllegalArgumentException("STARTED event must not define finishedAt");
+                }
+                if (this.failure != null) {
+                    throw new IllegalArgumentException("STARTED event must not define failure");
+                }
+            }
+            case SUCCEEDED -> {
+                if (this.finishedAt == null) {
+                    throw new IllegalArgumentException("SUCCEEDED event must define finishedAt");
+                }
+                if (this.failure != null) {
+                    throw new IllegalArgumentException("SUCCEEDED event must not define failure");
+                }
+            }
+            case FAILED -> {
+                if (this.finishedAt == null) {
+                    throw new IllegalArgumentException("FAILED event must define finishedAt");
+                }
+                if (this.failure == null) {
+                    throw new IllegalArgumentException("FAILED event must define failure");
+                }
+            }
+        }
     }
 
     /**

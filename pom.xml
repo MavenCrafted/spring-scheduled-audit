@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <name>scheduled-audit-autoconfigure</name>
-    <description>Library for recording execution events of Spring @Scheduled jobs with extensible storage options</description>
+    <description>Spring Boot auto-configuration for publishing audit events around @Scheduled job executions</description>
     <url>https://github.com/mavencrafted/scheduled-audit-autoconfigure</url>
 
     <licenses>
