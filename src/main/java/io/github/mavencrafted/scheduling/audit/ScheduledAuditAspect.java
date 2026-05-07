@@ -7,13 +7,18 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Aspect that emits {@link ScheduledAuditEvent} instances around {@code @Scheduled} method execution.
@@ -24,6 +29,7 @@ public class ScheduledAuditAspect {
     private static final Log logger = LogFactory.getLog(ScheduledAuditAspect.class);
 
     private final List<ScheduledAuditListener> scheduledAuditListeners;
+    private final Map<Method, ScheduledAuditDescriptor> scheduledAuditDescriptors = new ConcurrentHashMap<>();
 
     /**
      * Creates a new aspect backed by the provided listeners.
@@ -46,15 +52,29 @@ public class ScheduledAuditAspect {
     public Object audit(ProceedingJoinPoint joinPoint, Scheduled scheduled) throws Throwable {
         UUID executionId = UUID.randomUUID();
         Instant startedAt = Instant.now();
-        String taskName = resolveTaskName(joinPoint);
-        invokeListenersSafely(ScheduledAuditEvent.started(executionId, taskName, startedAt));
+        Method method = resolveScheduledMethod(joinPoint);
+        ScheduledAuditDescriptor descriptor = resolveDescriptor(method);
+        invokeListenersSafely(ScheduledAuditEvent.started(executionId, descriptor.taskName(), descriptor.tags(), startedAt));
         try {
             Object result = joinPoint.proceed();
-            invokeListenersSafely(ScheduledAuditEvent.succeeded(executionId, taskName, startedAt, Instant.now()));
+            invokeListenersSafely(ScheduledAuditEvent.succeeded(
+                    executionId,
+                    descriptor.taskName(),
+                    descriptor.tags(),
+                    startedAt,
+                    Instant.now()
+            ));
             return result;
         }
         catch (Throwable throwable) {
-            invokeListenersSafely(ScheduledAuditEvent.failed(executionId, taskName, startedAt, Instant.now(), throwable));
+            invokeListenersSafely(ScheduledAuditEvent.failed(
+                    executionId,
+                    descriptor.taskName(),
+                    descriptor.tags(),
+                    startedAt,
+                    Instant.now(),
+                    throwable
+            ));
             throw throwable;
         }
     }
@@ -70,11 +90,54 @@ public class ScheduledAuditAspect {
         }
     }
 
-    private String resolveTaskName(ProceedingJoinPoint joinPoint) {
+    private Method resolveScheduledMethod(ProceedingJoinPoint joinPoint) {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         Object target = joinPoint.getTarget();
         Class<?> targetClass = (target != null ? AopUtils.getTargetClass(target) : method.getDeclaringClass());
-        Method specificMethod = AopUtils.getMostSpecificMethod(method, targetClass);
-        return ClassUtils.getQualifiedMethodName(specificMethod, targetClass);
+        return AopUtils.getMostSpecificMethod(method, targetClass);
+    }
+
+    private ScheduledAuditDescriptor resolveDescriptor(Method method) {
+        return this.scheduledAuditDescriptors.computeIfAbsent(method, this::extractDescriptor);
+    }
+
+    private ScheduledAuditDescriptor extractDescriptor(Method method) {
+        String taskName = ClassUtils.getQualifiedMethodName(method, method.getDeclaringClass());
+        try {
+            return new ScheduledAuditDescriptor(taskName, resolveTags(method));
+        }
+        catch (RuntimeException ex) {
+            logger.warn("Failed to resolve ScheduledAudit metadata for task: " + taskName, ex);
+            return new ScheduledAuditDescriptor(taskName, Set.of());
+        }
+    }
+
+    private Set<String> resolveTags(Method method) {
+        ScheduledAudit scheduledAudit = AnnotatedElementUtils.findMergedAnnotation(method, ScheduledAudit.class);
+        if (scheduledAudit == null) {
+            return Set.of();
+        }
+
+        String[] rawTags = scheduledAudit.tags();
+        if (rawTags.length == 0) {
+            return Set.of();
+        }
+
+        LinkedHashSet<String> normalizedTags = new LinkedHashSet<>(rawTags.length);
+        for (String rawTag : rawTags) {
+            if (rawTag == null) {
+                continue;
+            }
+
+            String normalizedTag = rawTag.trim();
+            if (!normalizedTag.isEmpty()) {
+                normalizedTags.add(normalizedTag);
+            }
+        }
+
+        return normalizedTags.isEmpty() ? Set.of() : Set.copyOf(normalizedTags);
+    }
+
+    private record ScheduledAuditDescriptor(String taskName, Set<String> tags) {
     }
 }

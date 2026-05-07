@@ -4,6 +4,7 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,6 +21,7 @@ class ScheduledAuditEventTest {
 
         assertThat(event.getExecutionId()).isEqualTo(executionId);
         assertThat(event.getTaskName()).isEqualTo("testTask");
+        assertThat(event.getTags()).isEmpty();
         assertThat(event.getStatus()).isEqualTo(ScheduledAuditEvent.Status.STARTED);
         assertThat(event.getStartedAt()).isEqualTo(startedAt);
         assertThat(event.getFinishedAt()).isNull();
@@ -46,6 +48,18 @@ class ScheduledAuditEventTest {
         assertThat(event.getFinishedAt()).isEqualTo(finishedAt);
         assertThat(event.getDuration()).isEqualTo(Duration.ofSeconds(1));
         assertThat(event.getFailure()).isSameAs(failure);
+    }
+
+    @Test
+    void storesProvidedTags() {
+        ScheduledAuditEvent event = ScheduledAuditEvent.started(
+                UUID.randomUUID(),
+                "testTask",
+                Set.of("billing", "noisy"),
+                Instant.now()
+        );
+
+        assertThat(event.getTags()).containsExactlyInAnyOrder("billing", "noisy");
     }
 
     @Test
