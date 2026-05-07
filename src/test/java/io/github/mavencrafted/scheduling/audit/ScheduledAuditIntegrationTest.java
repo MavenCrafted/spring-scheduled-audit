@@ -39,6 +39,8 @@ class ScheduledAuditIntegrationTest {
         assertThat(started.getExecutionId()).isEqualTo(succeeded.getExecutionId());
         assertThat(started.getTaskName())
                 .isEqualTo("io.github.mavencrafted.scheduling.audit.ScheduledAuditIntegrationTest$SampleScheduledBean.run");
+        assertThat(started.getTags()).containsExactlyInAnyOrder("billing", "noisy");
+        assertThat(succeeded.getTags()).containsExactlyInAnyOrder("billing", "noisy");
         assertThat(started.getFailure()).isNull();
         assertThat(succeeded.getFailure()).isNull();
         assertThat(succeeded.getFinishedAt()).isNotNull();
@@ -77,6 +79,7 @@ class ScheduledAuditIntegrationTest {
     public static class SampleScheduledBean {
 
         @Scheduled(initialDelay = 0, fixedDelay = 600000)
+        @ScheduledAudit(tags = {"billing", "noisy"})
         public void run() {
         }
     }

@@ -30,6 +30,8 @@ class ScheduledAuditAspectTest {
         assertThat(events.get(1).getStatus()).isEqualTo(ScheduledAuditEvent.Status.SUCCEEDED);
         assertThat(events.get(0).getExecutionId()).isEqualTo(events.get(1).getExecutionId());
         assertThat(events.get(0).getTaskName()).contains("SampleScheduledBean").endsWith(".run");
+        assertThat(events.get(0).getTags()).containsExactlyInAnyOrder("billing", "noisy");
+        assertThat(events.get(1).getTags()).containsExactlyInAnyOrder("billing", "noisy");
         assertThat(events.get(1).getFinishedAt()).isNotNull();
         assertThat(events.get(1).getFailure()).isNull();
     }
@@ -49,6 +51,20 @@ class ScheduledAuditAspectTest {
         assertThat(events.get(1).getStatus()).isEqualTo(ScheduledAuditEvent.Status.FAILED);
         assertThat(events.get(0).getExecutionId()).isEqualTo(events.get(1).getExecutionId());
         assertThat(events.get(1).getFailure()).isSameAs(failure);
+    }
+
+    @Test
+    void publishesEmptyTagsWhenAnnotationIsAbsent() throws Throwable {
+        List<ScheduledAuditEvent> events = new ArrayList<>();
+        ScheduledAuditAspect aspect = new ScheduledAuditAspect(List.of(events::add));
+        Method method = plainScheduledMethod();
+
+        Object result = aspect.audit(joinPoint(method, "done"), scheduled(method));
+
+        assertThat(result).isEqualTo("done");
+        assertThat(events).hasSize(2);
+        assertThat(events.get(0).getTags()).isEmpty();
+        assertThat(events.get(1).getTags()).isEmpty();
     }
 
     @Test
@@ -123,6 +139,10 @@ class ScheduledAuditAspectTest {
         return SampleScheduledBean.class.getMethod("run");
     }
 
+    private Method plainScheduledMethod() throws NoSuchMethodException {
+        return SampleScheduledBean.class.getMethod("runWithoutAudit");
+    }
+
     private Scheduled scheduled(Method method) {
         return method.getAnnotation(Scheduled.class);
     }
@@ -130,7 +150,13 @@ class ScheduledAuditAspectTest {
     static final class SampleScheduledBean {
 
         @Scheduled(fixedRate = 5000)
+        @ScheduledAudit(tags = {"billing", "noisy"})
         public String run() {
+            return "done";
+        }
+
+        @Scheduled(fixedRate = 5000)
+        public String runWithoutAudit() {
             return "done";
         }
     }
