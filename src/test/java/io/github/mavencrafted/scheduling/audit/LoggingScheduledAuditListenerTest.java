@@ -12,7 +12,7 @@ class LoggingScheduledAuditListenerTest {
 
     @Test
     void logsAllEventsWhenNoTagFiltersAreConfigured() {
-        LoggingScheduledAuditListener listener = new LoggingScheduledAuditListener();
+        LoggingScheduledAuditListener listener = new LoggingScheduledAuditListener(new ScheduledAuditProperties.Logging());
 
         assertThat(listener.shouldLog(eventWithTags("billing", "noisy"))).isTrue();
         assertThat(listener.shouldLog(eventWithTags())).isTrue();

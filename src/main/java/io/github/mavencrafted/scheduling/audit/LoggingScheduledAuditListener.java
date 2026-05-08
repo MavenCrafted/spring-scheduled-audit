@@ -9,19 +9,12 @@ import java.util.Set;
 /**
  * Default {@link ScheduledAuditListener} that writes scheduled audit events to the application log.
  */
-public final class LoggingScheduledAuditListener implements ScheduledAuditListener {
+final class LoggingScheduledAuditListener implements ScheduledAuditListener {
 
     private static final Log logger = LogFactory.getLog(LoggingScheduledAuditListener.class);
 
     private final Set<String> includeTags;
     private final Set<String> excludeTags;
-
-    /**
-     * Creates a logging listener with default logging settings.
-     */
-    public LoggingScheduledAuditListener() {
-        this(new ScheduledAuditProperties.Logging());
-    }
 
     LoggingScheduledAuditListener(ScheduledAuditProperties.Logging loggingProperties) {
         this.includeTags = normalizeTags(loggingProperties.getIncludeTags());

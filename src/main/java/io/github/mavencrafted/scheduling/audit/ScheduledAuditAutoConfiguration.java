@@ -47,7 +47,7 @@ public final class ScheduledAuditAutoConfiguration {
             havingValue = "true",
             matchIfMissing = true
     )
-    public LoggingScheduledAuditListener loggingScheduledAuditListener(ScheduledAuditProperties scheduledAuditProperties) {
+    LoggingScheduledAuditListener loggingScheduledAuditListener(ScheduledAuditProperties scheduledAuditProperties) {
         return new LoggingScheduledAuditListener(scheduledAuditProperties.getLogging());
     }
 }
