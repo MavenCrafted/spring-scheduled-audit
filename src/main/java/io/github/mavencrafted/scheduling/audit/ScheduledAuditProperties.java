@@ -59,6 +59,11 @@ public class ScheduledAuditProperties {
         private boolean enabled = true;
 
         /**
+         * Whether failed-event logs should include the full failure stack trace.
+         */
+        private boolean includeStacktrace = false;
+
+        /**
          * Tags that must be present for the default logging listener to log an event.
          */
         private Set<String> includeTags = new LinkedHashSet<>();
@@ -84,6 +89,24 @@ public class ScheduledAuditProperties {
          */
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+
+        /**
+         * Returns whether failed-event logs include the full stack trace.
+         *
+         * @return {@code true} when failed-event logs include the full stack trace
+         */
+        public boolean isIncludeStacktrace() {
+            return this.includeStacktrace;
+        }
+
+        /**
+         * Sets whether failed-event logs include the full stack trace.
+         *
+         * @param includeStacktrace whether failed-event logs include the full stack trace
+         */
+        public void setIncludeStacktrace(boolean includeStacktrace) {
+            this.includeStacktrace = includeStacktrace;
         }
 
         /**

@@ -16,6 +16,17 @@ class LoggingScheduledAuditListenerTest {
 
         assertThat(listener.shouldLog(eventWithTags("billing", "noisy"))).isTrue();
         assertThat(listener.shouldLog(eventWithTags())).isTrue();
+        assertThat(listener.includesStacktrace()).isFalse();
+    }
+
+    @Test
+    void canIncludeStacktraceForFailedLogs() {
+        ScheduledAuditProperties.Logging logging = new ScheduledAuditProperties.Logging();
+        logging.setIncludeStacktrace(true);
+
+        LoggingScheduledAuditListener listener = new LoggingScheduledAuditListener(logging);
+
+        assertThat(listener.includesStacktrace()).isTrue();
     }
 
     @Test
