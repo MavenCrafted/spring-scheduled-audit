@@ -13,10 +13,12 @@ final class LoggingScheduledAuditListener implements ScheduledAuditListener {
 
     private static final Log logger = LogFactory.getLog(LoggingScheduledAuditListener.class);
 
+    private final boolean includeStacktrace;
     private final Set<String> includeTags;
     private final Set<String> excludeTags;
 
     LoggingScheduledAuditListener(ScheduledAuditProperties.Logging loggingProperties) {
+        this.includeStacktrace = loggingProperties.isIncludeStacktrace();
         this.includeTags = normalizeTags(loggingProperties.getIncludeTags());
         this.excludeTags = normalizeTags(loggingProperties.getExcludeTags());
     }
@@ -42,6 +44,10 @@ final class LoggingScheduledAuditListener implements ScheduledAuditListener {
         return this.includeTags.isEmpty() || matchesAny(event, this.includeTags);
     }
 
+    boolean includesStacktrace() {
+        return this.includeStacktrace;
+    }
+
     private void logStarted(ScheduledAuditEvent event) {
         if (logger.isDebugEnabled()) {
             logger.debug("Scheduled task started [executionId=" + event.getExecutionId()
@@ -61,11 +67,19 @@ final class LoggingScheduledAuditListener implements ScheduledAuditListener {
     }
 
     private void logFailed(ScheduledAuditEvent event) {
-        logger.error("Scheduled task failed [executionId=" + event.getExecutionId()
+        String message = "Scheduled task failed [executionId=" + event.getExecutionId()
                 + ", scheduledMethod=" + event.getScheduledMethod()
                 + ", startedAt=" + event.getStartedAt()
                 + ", finishedAt=" + event.getFinishedAt()
-                + ", duration=" + event.getDuration() + "]", event.getFailure());
+                + ", duration=" + event.getDuration()
+                + failureSummary(event.getFailure()) + "]";
+
+        if (this.includeStacktrace) {
+            logger.error(message, event.getFailure());
+            return;
+        }
+
+        logger.error(message);
     }
 
     private boolean matchesAny(ScheduledAuditEvent event, Set<String> tags) {
@@ -96,5 +110,14 @@ final class LoggingScheduledAuditListener implements ScheduledAuditListener {
         }
 
         return normalizedTags.isEmpty() ? Set.of() : Set.copyOf(normalizedTags);
+    }
+
+    private String failureSummary(Throwable failure) {
+        if (failure == null) {
+            return "";
+        }
+
+        return ", failureType=" + failure.getClass().getName()
+                + ", failureMessage=" + failure.getMessage();
     }
 }

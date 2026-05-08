@@ -83,15 +83,28 @@ class ScheduledAuditAutoConfigurationTest {
         contextRunner.withPropertyValues(
                         "scheduled-audit.logging.include-tags[0]=billing",
                         "scheduled-audit.logging.include-tags[1]=ops",
-                        "scheduled-audit.logging.exclude-tags[0]=noisy"
+                        "scheduled-audit.logging.exclude-tags[0]=noisy",
+                        "scheduled-audit.logging.include-stacktrace=true"
                 )
                 .run(context -> {
                     assertThat(context).hasNotFailed();
 
                     ScheduledAuditProperties properties = context.getBean(ScheduledAuditProperties.class);
 
+                    assertThat(properties.getLogging().isIncludeStacktrace()).isTrue();
                     assertThat(properties.getLogging().getIncludeTags()).containsExactly("billing", "ops");
                     assertThat(properties.getLogging().getExcludeTags()).containsExactly("noisy");
                 });
+    }
+
+    @Test
+    void contextDefaultsFailedLoggingStacktraceToFalse() {
+        contextRunner.run(context -> {
+            assertThat(context).hasNotFailed();
+
+            ScheduledAuditProperties properties = context.getBean(ScheduledAuditProperties.class);
+
+            assertThat(properties.getLogging().isIncludeStacktrace()).isFalse();
+        });
     }
 }
