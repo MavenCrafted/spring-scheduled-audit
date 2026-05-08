@@ -172,7 +172,7 @@ public final class ScheduledAuditEvent {
      * @return {@code true} when the tag is present
      */
     public boolean hasTag(String tag) {
-        return this.tags.contains(tag);
+        return tag != null && this.tags.contains(tag);
     }
 
     /**
